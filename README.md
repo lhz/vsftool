@@ -1,5 +1,5 @@
 # vsftool
-Tool for working with VICE snapshot files
+Tool for working with snapshot files created by `x64` or `x64sc` from the [VICE emulator project](http://vice-emu.sourceforge.net/).
 
 ## Compiling
 
