@@ -111,7 +111,7 @@ bool inject_file_into_snapshot(char* filename)
 	  success = true;
       }
       else {
-	fprintf(stderr, "%s: File doesn't fit into memory!", filename);
+	fprintf(stderr, "%s: File doesn't fit into memory at $%04X\n", filename, saddr);
       }
     }
     fclose(f);
