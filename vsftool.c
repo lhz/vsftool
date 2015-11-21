@@ -43,9 +43,8 @@ bool check_snapshot(char *filename)
     fprintf(stderr, "%s: No C64MEM block found.\n", filename);
     return false;
   }
-  snapshot_mem += 26;
-  printf("Found C64MEM block at offset %ld.\n", (snapshot_mem - snapshot_data));
 
+  snapshot_mem += 26;
   return true;
 }
 
@@ -77,27 +76,57 @@ bool read_snapshot(char* filename)
 }
 
 
-void write_snapshot(char* filename)
+bool write_snapshot(char* filename)
 {
+  bool success = false;
   FILE *f;
   if (f = fopen(filename, "wb")) {
-    fwrite(snapshot_data, 1, snapshot_size, f);
+    if (fwrite(snapshot_data, 1, snapshot_size, f) == snapshot_size)
+      success = true;
+    else
+      perror(filename);
     fclose(f);
   }
   else {
+    perror(filename);
   }
 }
 
 
-void inject_file_into_snapshot(char* filename)
+bool inject_file_into_snapshot(char* filename)
 {
+  bool success = false;
+  FILE *f;
+  if (f = fopen(filename, "rb")) {
+    fseek(f, 0, SEEK_END);
+    int length = ftell(f);
+    rewind(f);
+    unsigned char addr[2];
+    if (fread(addr, 1, 2, f) == 2) {
+      int saddr = addr[0] + 256 * addr[1];
+      int eaddr = saddr + length - 3;
+      if (eaddr < 65536) {
+	printf("$%04X-$%04X: %s\n", saddr, eaddr, filename);
+	if (fread(snapshot_mem + saddr, 1, length - 2, f) == length)
+	  success = true;
+      }
+      else {
+	fprintf(stderr, "%s: File doesn't fit into memory!", filename);
+      }
+    }
+    fclose(f);
+  }
+  else {
+    perror(filename);
+  }
+  return success;
 }
 
 
 int main(int argc, char* argv[])
 {
   if (argc < 4) {
-    printf("Usage: %s <source-snapshot> <target-snapshot> <files>\n", argv[0]);
+    printf("Usage: %s <source> <target> FILES...\n", argv[0]);
     return -1;
   }
 
