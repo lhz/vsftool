@@ -4,28 +4,54 @@
 #include <string.h>
 
 
-#define sysfail(str) { perror(str); exit(EXIT_FAILURE); }
-
-
 char *snapshot_data = NULL;
 long  snapshot_size;
 char *snapshot_mem;
 
 
-bool check_snapshot(char *filename) {
+void *memstr(const void *haystack, size_t hlen, const void *needle)
+{
+  int needle_first;
+  const void *p = haystack;
+  size_t plen = hlen;
+  size_t nlen = strlen(needle);
+
+  if (!nlen)
+    return NULL;
+
+  needle_first = *(unsigned char *)needle;
+
+  while (plen >= nlen && (p = memchr(p, needle_first, plen - nlen + 1))) {
+    if (!memcmp(p, needle, nlen))
+      return (void *)p;
+    p++;
+    plen = hlen - (p - haystack);
+  }
+  return NULL;
+}
+
+
+bool check_snapshot(char *filename)
+{
   if (strstr(snapshot_data, "VICE Snapshot File") != snapshot_data) {
     fprintf(stderr, "%s: Not a VICE snapshot file.\n", filename);
     return false;
   }
-  /* if (strstr(snapshot_data, "C64MEM") == NULL) { */
-  /*   fprintf(stderr, "%s: No C64MEM block found.\n", filename); */
-  /*   return false; */
-  /* } */
+
+  snapshot_mem = memstr(snapshot_data, snapshot_size, "C64MEM");
+  if (!snapshot_mem) {
+    fprintf(stderr, "%s: No C64MEM block found.\n", filename);
+    return false;
+  }
+  snapshot_mem += 26;
+  printf("Found C64MEM block at offset %ld.\n", (snapshot_mem - snapshot_data));
+
   return true;
 }
 
 
-bool read_snapshot(char* filename) {
+bool read_snapshot(char* filename)
+{
   FILE *f;
   bool success = false;
   if (f = fopen(filename, "rb")) {
@@ -51,7 +77,8 @@ bool read_snapshot(char* filename) {
 }
 
 
-void write_snapshot(char* filename) {
+void write_snapshot(char* filename)
+{
   FILE *f;
   if (f = fopen(filename, "wb")) {
     fwrite(snapshot_data, 1, snapshot_size, f);
@@ -62,11 +89,13 @@ void write_snapshot(char* filename) {
 }
 
 
-void inject_file_into_snapshot(char* filename) {
+void inject_file_into_snapshot(char* filename)
+{
 }
 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
   if (argc < 4) {
     printf("Usage: %s <source-snapshot> <target-snapshot> <files>\n", argv[0]);
     return -1;
