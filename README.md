@@ -7,8 +7,6 @@ Simply run `make` to compile the source code into an executable file `vsftool`.
 
 ## Usage
 
-Inject files into snapshot:
-
 `vsftool source.vsf target.vsf file1.prg [file2.prg file3.prg ...]`
 
 This reads an existing snapshot `source.vsf` then stores it as a new snapshot `target.vsf`, after
